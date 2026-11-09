@@ -63,13 +63,13 @@ Issue both sub-agent calls together, in the foreground, and aggregate the report
 
 - The full diff command and commit list.
 - The list of standards-source files you found in step 3, **plus the smell baseline from step 3** pasted in full (the sub-agent has no other access to it).
-- The brief: "Report, per file/hunk where relevant, (a) every place the diff violates a documented standard: cite the standard (file + the rule); and (b) any baseline smell you spot: name it and quote the hunk. Distinguish hard violations from judgement calls: documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Under 400 words."
+- The brief: "Report, per file/hunk where relevant, (a) every place the diff violates a documented standard: cite the standard (file + the rule); and (b) any baseline smell you spot: name it and quote the hunk. Distinguish hard violations from judgement calls: documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Mark every finding **blocking** or **non-blocking**, and say whether it is **introduced by this diff** or **pre-existing**. Under 400 words."
 
 **Spec sub-agent prompt** should include:
 
 - The diff command and commit list.
 - The path or fetched contents of the spec.
-- The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec line for each finding. Under 400 words."
+- The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec line for each finding. Mark every finding **blocking** or **non-blocking**, and say whether it is **introduced by this diff** or **pre-existing**. Under 400 words."
 
 If the spec is missing, skip the Spec sub-agent and note this in the final report.
 
@@ -87,3 +87,15 @@ A change can pass one axis and fail the other:
 - Code that does exactly what the issue asked but breaks the project's conventions → **Spec pass, Standards fail.**
 
 Reporting them separately stops one axis from masking the other.
+
+### 6. Converge, then stop
+
+Each axis ends with a verdict: **ready** or **not ready**. A finding count is not a verdict: eighteen non-blocking nits can be ready, and one blocking finding is not.
+
+- Each finding is **blocking** or **non-blocking**, and **introduced by this diff** or **pre-existing**. Pre-existing findings are reported and left to their own change unless they block this one.
+- Every blocking finding closes before merge: a fix, or a rejection with its reason. Nothing is dismissed silently.
+- **Three rounds maximum.** One round is one full review of the change. After the third, stop and rethink the approach; do not request a fourth round of comments.
+- After fixes, re-review only the **incremental diff** since the last reviewed candidate, plus the surfaces the fixes touch. Do not re-review the whole change from scratch.
+- The author agent resolves every blocking finding before a human sees the change.
+
+These rules bind the reviewer and the author agent. They are not negotiable downward under time pressure.
